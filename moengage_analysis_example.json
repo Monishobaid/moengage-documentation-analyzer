@@ -1,0 +1,137 @@
+{
+  "url": "https://help.moengage.com/hc/en-us/articles/23072207451540-Discontinuation-of-Mi-Push-Service",
+  "analysis_timestamp": "2025-06-01T09:50:27.686052",
+  "readability": {
+    "assessment": {
+      "flesch_reading_ease": 53.71,
+      "gunning_fog_index": 9.35,
+      "average_sentence_length": 17.5,
+      "readability_level": "Fairly Difficult",
+      "technical_terms_count": 3
+    },
+    "explanation": "The content is somewhat difficult to read. Consider simplifying language and sentence structure. (Flesch score: 53.7)",
+    "suggestions": [
+      "The content has a low readability score (Flesch: 53.7). Consider simplifying sentences and using more common words to make it easier for marketers to understand.",
+      "The following sentences are particularly complex and should be simplified:\n- \"User Guide Campaigns and Channels Mobile Push Getting Started with Mobile Push Discontinuation of Mi...\"\n- \"The shutdown will only impact App Push Notifications sent via Push Amplification™ Plus to Xiaomi Dev...\"\n- \"In the Push Amplification™ Plus, the Mi Push Native service was used as a push notification delivery...\""
+    ]
+  },
+  "structure": {
+    "assessment": {
+      "headings_count": 8,
+      "paragraphs_count": 18,
+      "lists_count": 188,
+      "code_blocks_count": 0,
+      "images_count": 5,
+      "average_paragraph_length": 35.0,
+      "heading_hierarchy": {
+        "is_valid": false,
+        "issue": "Heading hierarchy jumps from H1 to H3. Use sequential heading levels."
+      }
+    },
+    "suggestions": [
+      "Heading hierarchy is inconsistent. Heading hierarchy jumps from H1 to H3. Use sequential heading levels.",
+      "Consider adding a 'Next Steps' or 'Summary' section to conclude the article."
+    ]
+  },
+  "completeness": {
+    "assessment": {
+      "code_examples_count": 0,
+      "images_count": 5,
+      "example_mentions": 0,
+      "has_step_by_step": true,
+      "alerts_count": 0
+    },
+    "suggestions": [
+      "The article lacks concrete examples. Add practical examples showing how marketers would actually use this feature in real scenarios.",
+      "The article doesn't clearly state prerequisites or required knowledge. Add a 'Prerequisites' or 'Before you begin' section.",
+      "Consider adding a 'Common Use Cases' section to help marketers understand when and why they would use this feature."
+    ]
+  },
+  "style_guidelines": {
+    "assessment": {
+      "voice_tone": {
+        "passive_voice_percentage": 11.428571428571429,
+        "passive_examples": [
+          "Now that the Mi Push service is being shut down, w...",
+          "What will be the impact?...",
+          "From March 31st, 2024, Xiaomi devices will be targ..."
+        ],
+        "first_person_count": 5
+      },
+      "clarity": [],
+      "action_orientation": {
+        "weak_verbs_count": 2,
+        "weak_verb_examples": [
+          "'might' in: You might have already received correspondence reg...",
+          "'may' in: The Mi SDK will continue to be integrated as a Dea..."
+        ],
+        "has_clear_actions": true
+      },
+      "microsoft_style": {
+        "verbose_phrases": {
+          "count": 0,
+          "examples": [],
+          "message": "Found 0 verbose phrases that can be simplified for clearer communication."
+        },
+        "missing_contractions": {
+          "count": 6,
+          "examples": [
+            "Use 'can't' instead of 'cannot' in: Now that the Mi Push service is being shut down, w...",
+            "Use 'you'll' instead of 'you will' in: On the MoEngage Dashboard, you will stop seeing th...",
+            "Use 'don't' instead of 'do not' in: Will I face app crashes if I do not remove Mi SDK?...",
+            "Use 'won't' instead of 'will not' in: If your app has Mi SDK integrated along with MoEng...",
+            "Use 'won't' instead of 'will not' in: The Mi SDK will continue to be integrated as a Dea..."
+          ],
+          "message": "Found 6 opportunities to use contractions for a friendlier tone."
+        },
+        "title_capitalization": {
+          "count": 3,
+          "examples": [
+            "Use sentence case: 'When will MoEngage apply these changes?' → 'When will moengage apply these changes?'",
+            "Use sentence case: 'Recommended Action' → 'Recommended action'",
+            "Use sentence case: 'Discontinuation of Mi  Push Service' → 'Discontinuation of mi  push service'"
+          ],
+          "message": "Found 3 headings using title case instead of sentence case."
+        },
+        "unnecessary_punctuation": {
+          "count": 0,
+          "examples": [],
+          "message": "Found 0 headings with unnecessary end punctuation."
+        },
+        "oxford_comma": {
+          "count": 0,
+          "examples": [],
+          "message": "Found 0 lists missing Oxford commas."
+        },
+        "spacing_issues": {
+          "count": 0,
+          "examples": [],
+          "message": "Found 0 spacing issues that need correction."
+        },
+        "weak_constructions": {
+          "count": 0,
+          "examples": [],
+          "message": "Found 0 weak writing constructions that should be revised."
+        },
+        "jargon_usage": {
+          "count": 2,
+          "examples": [
+            "'sdk' should be explained as 'Software Development Kit (SDK)'",
+            "'rest' should be explained as 'web service standard'"
+          ],
+          "message": "Found 2 technical terms that need explanation for non-technical users."
+        }
+      }
+    },
+    "suggestions": [
+      "HIGH PRIORITY: Found 6 opportunities to use contractions for a friendlier tone.",
+      "MEDIUM PRIORITY: Found 3 headings using title case instead of sentence case.",
+      "MEDIUM PRIORITY: Found 2 technical terms that need explanation for non-technical users."
+    ]
+  },
+  "overall_recommendations": [
+    "HIGH PRIORITY: Improve readability by simplifying language and sentence structure.",
+    "HIGH PRIORITY: Add practical examples to illustrate concepts.",
+    "MEDIUM PRIORITY: Improve compliance with Microsoft Style Guide principles."
+  ]
+} 

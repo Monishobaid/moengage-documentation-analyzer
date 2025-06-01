@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoEngage Documentation Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>MoEngage Documentation Analyzer</h1>
+            <p>Analyze and improve your documentation for better marketer readability</p>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <input type="url" 
+                       id="urlInput" 
+                       class="input-field" 
+                       placeholder="Enter MoEngage documentation URL..."
+                       value="">
+                <button id="analyzeBtn" class="analyze-btn" onclick="analyzeDocument()">
+                    Analyze Document
+                </button>
+            </div>
+            <p class="example-text">
+                Example: https://help.moengage.com/hc/en-us/articles/360058033292-Push-Amplification
+            </p>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <p style="margin-top: 1rem; color: var(--text-secondary);">Analyzing documentation...</p>
+        </div>
+
+        <div id="results" class="results">
+            <!-- Summary Cards -->
+            <div id="summaryCards" class="summary-cards"></div>
+
+            <!-- Analysis Sections -->
+            <div id="analysisSections"></div>
+
+            <!-- Overall Recommendations -->
+            <div id="overallRecommendations" class="overall-recommendations" style="display: none;">
+                <h2>📌 Overall Recommendations</h2>
+                <div id="recommendationsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function analyzeDocument() {
+            const urlInput = document.getElementById('urlInput');
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                showError('Please enter a URL to analyze');
+                return;
+            }
+
+            // Clear previous results
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('results').style.display = 'none';
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('analyzeBtn').disabled = true;
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Analysis failed');
+                }
+
+                displayResults(data);
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('analyzeBtn').disabled = false;
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = `Error: ${message}`;
+            errorDiv.style.display = 'block';
+        }
+
+        function displayResults(data) {
+            // Show results container
+            document.getElementById('results').style.display = 'block';
+
+            // Display summary cards
+            displaySummaryCards(data.summary);
+
+            // Display analysis sections
+            displayAnalysisSections(data);
+
+            // Display overall recommendations
+            if (data.overall_recommendations && data.overall_recommendations.length > 0) {
+                displayOverallRecommendations(data.overall_recommendations);
+            }
+        }
+
+        function displaySummaryCards(summary) {
+            const container = document.getElementById('summaryCards');
+            container.innerHTML = `
+                <div class="summary-card total">
+                    <h3>Total Suggestions</h3>
+                    <div class="value">${summary.total_suggestions}</div>
+                </div>
+                <div class="summary-card high-priority">
+                    <h3>High Priority</h3>
+                    <div class="value">${summary.high_priority}</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Readability</h3>
+                    <div class="value">${summary.sections.readability || 0}</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Structure</h3>
+                    <div class="value">${summary.sections.structure || 0}</div>
+                </div>
+            `;
+        }
+
+        function displayAnalysisSections(data) {
+            const container = document.getElementById('analysisSections');
+            container.innerHTML = '';
+
+            // Readability Section
+            if (data.readability && !data.readability.error) {
+                container.innerHTML += createSection(
+                    'READ',
+                    'Readability Analysis',
+                    data.readability,
+                    getReadabilityBadge(data.readability.assessment?.readability_level)
+                );
+            }
+
+            // Structure Section
+            if (data.structure && !data.structure.error) {
+                container.innerHTML += createSection(
+                    'STRUCT',
+                    'Structure & Flow',
+                    data.structure
+                );
+            }
+
+            // Completeness Section
+            if (data.completeness && !data.completeness.error) {
+                container.innerHTML += createSection(
+                    'COMPLETE',
+                    'Completeness & Examples',
+                    data.completeness
+                );
+            }
+
+            // Style Guidelines Section
+            if (data.style_guidelines && !data.style_guidelines.error) {
+                container.innerHTML += createSection(
+                    'STYLE',
+                    'Style Guidelines',
+                    data.style_guidelines
+                );
+            }
+        }
+
+        function createSection(icon, title, data, badge = '') {
+            let assessmentHtml = '';
+            if (data.assessment) {
+                assessmentHtml = '<div class="assessment-grid">';
+                
+                // Format assessment data based on section
+                if (title.includes('Readability')) {
+                    assessmentHtml += createAssessmentItem('Flesch Score', data.assessment.flesch_reading_ease?.toFixed(1));
+                    assessmentHtml += createAssessmentItem('Fog Index', data.assessment.gunning_fog_index?.toFixed(1));
+                    assessmentHtml += createAssessmentItem('Avg. Sentence Length', data.assessment.average_sentence_length?.toFixed(1) + ' words');
+                    assessmentHtml += createAssessmentItem('Technical Terms', data.assessment.technical_terms_count);
+                } else if (title.includes('Structure')) {
+                    assessmentHtml += createAssessmentItem('Headings', data.assessment.headings_count);
+                    assessmentHtml += createAssessmentItem('Paragraphs', data.assessment.paragraphs_count);
+                    assessmentHtml += createAssessmentItem('Lists', data.assessment.lists_count);
+                    assessmentHtml += createAssessmentItem('Images', data.assessment.images_count);
+                } else if (title.includes('Completeness')) {
+                    assessmentHtml += createAssessmentItem('Code Examples', data.assessment.code_examples_count);
+                    assessmentHtml += createAssessmentItem('Images', data.assessment.images_count);
+                    assessmentHtml += createAssessmentItem('Example Mentions', data.assessment.example_mentions);
+                    assessmentHtml += createAssessmentItem('Step-by-Step', data.assessment.has_step_by_step ? 'Yes' : 'No');
+                } else if (title.includes('Style')) {
+                    assessmentHtml += createAssessmentItem('Passive Voice', data.assessment.voice_tone?.passive_voice_percentage?.toFixed(1) + '%');
+                    assessmentHtml += createAssessmentItem('Weak Verbs', data.assessment.action_orientation?.weak_verbs_count);
+                    assessmentHtml += createAssessmentItem('First Person', data.assessment.voice_tone?.first_person_count);
+                    assessmentHtml += createAssessmentItem('Clear Actions', data.assessment.action_orientation?.has_clear_actions ? 'Yes' : 'No');
+                }
+                
+                assessmentHtml += '</div>';
+            }
+
+            let suggestionsHtml = '';
+            if (data.suggestions && data.suggestions.length > 0) {
+                suggestionsHtml = '<ul class="suggestions-list">';
+                data.suggestions.forEach(suggestion => {
+                    suggestionsHtml += `<li class="suggestion-item">${suggestion}</li>`;
+                });
+                suggestionsHtml += '</ul>';
+            }
+
+            return `
+                <div class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <span class="section-icon">${icon}</span>
+                            ${title}
+                        </h2>
+                        ${badge}
+                    </div>
+                    ${data.explanation ? `<p style="margin-bottom: 1.5rem; color: var(--text-secondary);">${data.explanation}</p>` : ''}
+                    ${assessmentHtml}
+                    ${suggestionsHtml}
+                </div>
+            `;
+        }
+
+        function createAssessmentItem(label, value) {
+            return `
+                <div class="assessment-item">
+                    <div class="assessment-label">${label}</div>
+                    <div class="assessment-value">${value}</div>
+                </div>
+            `;
+        }
+
+        function getReadabilityBadge(level) {
+            if (!level) return '';
+            
+            let className = 'medium';
+            if (level.includes('Easy')) className = 'easy';
+            else if (level.includes('Difficult')) className = 'difficult';
+            
+            return `<span class="badge ${className}">${level}</span>`;
+        }
+
+        function displayOverallRecommendations(recommendations) {
+            const container = document.getElementById('overallRecommendations');
+            const list = document.getElementById('recommendationsList');
+            
+            list.innerHTML = '';
+            recommendations.forEach(rec => {
+                const priority = rec.includes('HIGH PRIORITY') ? 'HIGH' : 'MEDIUM';
+                const text = rec.replace(/HIGH PRIORITY:|MEDIUM PRIORITY:/g, '').trim();
+                
+                list.innerHTML += `
+                    <div class="recommendation-item">
+                        <span class="priority-tag">${priority}</span>
+                        ${text}
+                    </div>
+                `;
+            });
+            
+            container.style.display = 'block';
+        }
+
+        // Allow Enter key to trigger analysis
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                analyzeDocument();
+            }
+        });
+
+        // Set example URL for demo
+        document.getElementById('urlInput').value = 'https://help.moengage.com/hc/en-us/articles/360058033292-Push-Amplification';
+    </script>
+</body>
+</html> 
