@@ -9,8 +9,8 @@ import nltk
 from collections import Counter
 import argparse
 
-# We need to download the NLTK punkt tokenizer for sentence detection
-# This is a one-time setup that handles sentence boundary detection properly
+# Download the NLTK sentence tokenizer if we don't have it yet
+# This happens automatically the first time you run the script
 try:
     nltk.data.find('tokenizers/punkt')
 except LookupError:
@@ -18,102 +18,85 @@ except LookupError:
 
 class DocumentationAnalyzer:
     """
-    A comprehensive analyzer for MoEngage documentation articles.
+    Analyzes MoEngage docs to see how marketer-friendly they are.
     
-    This class evaluates documentation from four key perspectives:
-    1. Readability - How easy is it for marketers to understand?
-    2. Structure - Is the content well-organized and scannable?
-    3. Completeness - Are all necessary elements present?
-    4. Style - Does it follow Microsoft Style Guide principles?
+    We check four main things:
+    1. Readability - Can marketers actually understand this?
+    2. Structure - Is it organized well or a wall of text?
+    3. Completeness - Missing examples? Screenshots? Step-by-step guides?
+    4. Style - Following Microsoft's style guide (they know what they're doing)
     
-    The analyzer provides detailed scoring and actionable suggestions for improvement.
+    Spits out scores and tells you exactly what to fix.
     """
     
     def __init__(self):
-        # Initialize with empty state - content will be loaded via fetch_article()
+        # Start with nothing - we'll load content when fetch_article() is called
         self.url = None
-        self.content = None  # Raw HTML content
-        self.soup = None     # Parsed HTML using BeautifulSoup
-        self.text_content = None  # Extracted plain text for analysis
+        self.content = None  # Raw HTML from the page
+        self.soup = None     # BeautifulSoup parsed version
+        self.text_content = None  # Just the text, no HTML tags
         
     def fetch_article(self, url: str) -> bool:
         """
-        Retrieves and parses the documentation article from the provided URL.
+        Grabs the article from a URL and gets it ready for analysis.
         
-        This method handles the HTTP request, validates the domain, and extracts
-        the main article content for analysis. It's designed to work specifically
-        with MoEngage documentation but can handle other URLs with a warning.
-        
-        Args:
-            url: The URL of the MoEngage documentation article to analyze
-            
-        Returns:
-            bool: True if the article was successfully fetched and parsed, False otherwise
+        Works best with MoEngage docs but will try other sites too.
+        Returns True if it worked, False if something went wrong.
         """
         try:
-            # First, let's validate that this is actually a MoEngage documentation URL
-            # We'll show a warning for other domains but still proceed
+            # Quick check - is this actually a MoEngage URL?
             parsed = urlparse(url)
             if 'help.moengage.com' not in parsed.netloc:
-                print(f"Warning: URL {url} is not from MoEngage documentation")
+                print(f"Heads up: {url} isn't MoEngage docs, but I'll try anyway")
             
-            # Set up headers to mimic a real browser request
-            # This helps avoid being blocked by anti-bot measures
+            # Pretend to be a real browser so we don't get blocked
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             }
             response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()  # Will raise an exception for HTTP error codes
+            response.raise_for_status()  # Crash if we get a 404 or something
             
-            # Store the raw content and create a parsed version
+            # Save everything we got
             self.url = url
             self.content = response.text
             self.soup = BeautifulSoup(self.content, 'html.parser')
             
-            # Try to extract just the main article content, not headers/footers/navigation
-            # This gives us cleaner text for analysis
+            # Try to find just the actual article content (skip navigation, footer, etc.)
             article_body = self.soup.find('article') or self.soup.find('div', class_='article-body')
             if article_body:
                 self.text_content = article_body.get_text(separator=' ', strip=True)
             else:
-                # If we can't find a specific article container, fall back to full body text
+                # Couldn't find an article container, just grab all the text
                 self.text_content = self.soup.get_text(separator=' ', strip=True)
             
             return True
             
         except Exception as e:
-            print(f"Error fetching article: {e}")
+            print(f"Couldn't fetch the article: {e}")
             return False
     
     def analyze_readability(self) -> Dict:
         """
-        Evaluates how easily marketers can read and understand the content.
+        Figures out if marketers can actually read and understand this content.
         
-        This analysis is specifically tailored for marketers who may not have deep
-        technical knowledge. We use established readability formulas plus custom
-        checks for technical jargon and sentence complexity.
-        
-        Returns:
-            Dict containing readability scores, interpretation, and specific suggestions
+        Uses real readability formulas plus some custom checks for tech jargon
+        that might confuse non-developers.
         """
         if not self.text_content:
             return {"error": "No content to analyze"}
         
-        # Calculate standard readability metrics
-        # Flesch Reading Ease: 0-100 scale (higher = easier to read)
-        flesch_score = textstat.flesch_reading_ease(self.text_content)
-        # Gunning Fog Index: Approximate years of education needed to understand
-        fog_score = textstat.gunning_fog(self.text_content)
-        # Average sentence length in words
+        # Run the standard readability tests
+        flesch_score = textstat.flesch_reading_ease(self.text_content)  # 0-100, higher = easier
+        fog_score = textstat.gunning_fog(self.text_content)  # Years of education needed
         avg_sentence_length = textstat.avg_sentence_length(self.text_content)
         
-        # Look for technical terms that might confuse marketers
+        # Look for scary technical terms
         technical_terms = self._identify_technical_terms()
         
-        # Convert the Flesch score into a human-readable interpretation
+        # Turn the Flesch score into something humans can understand
         readability_level = self._interpret_readability_score(flesch_score)
         
-        # Package up our assessment data
+        # Bundle up all our findings
         assessment = {
             "flesch_reading_ease": flesch_score,
             "gunning_fog_index": fog_score,
@@ -124,8 +107,8 @@ class DocumentationAnalyzer:
         
         suggestions = []
         
-        # Generate specific suggestions based on the scores we calculated
-        if flesch_score < 60:  # This indicates "difficult" reading level
+        # Give specific advice based on what we found
+        if flesch_score < 60:  # Pretty hard to read
             suggestions.append(
                 "The content has a low readability score (Flesch: {:.1f}). "
                 "Consider simplifying sentences and using more common words to make it easier for marketers to understand."
@@ -134,21 +117,21 @@ class DocumentationAnalyzer:
         
         if avg_sentence_length > 20:
             suggestions.append(
-                f"Average sentence length is {avg_sentence_length:.1f} words, which is quite high. "
-                "Consider breaking long sentences into shorter, more digestible ones. Aim for 15-20 words per sentence."
+                f"Average sentence length is {avg_sentence_length:.1f} words - that's pretty long! "
+                "Try breaking sentences up. Aim for 15-20 words max."
             )
         
         if len(technical_terms) > 10:
             suggestions.append(
-                f"Found {len(technical_terms)} technical terms that might be unfamiliar to marketers. "
-                f"Consider adding explanations or a glossary for terms like: {', '.join(list(technical_terms)[:5])}"
+                f"Found {len(technical_terms)} technical terms that might confuse marketers. "
+                f"Maybe add a glossary or explain terms like: {', '.join(list(technical_terms)[:5])}"
             )
         
-        # Find particularly complex sentences that need attention
+        # Find the worst offender sentences
         difficult_sentences = self._find_difficult_sentences()
         if difficult_sentences:
             suggestions.append(
-                "The following sentences are particularly complex and should be simplified:\n" +
+                "These sentences are particularly gnarly and should be simplified:\n" +
                 "\n".join(f"- \"{sent[:100]}...\"" for sent in difficult_sentences[:3])
             )
         
@@ -160,22 +143,19 @@ class DocumentationAnalyzer:
     
     def analyze_structure(self) -> Dict:
         """
-        Analyzes the article's structure and flow.
-        
-        Returns:
-            Dict containing structure assessment and suggestions
+        Checks if the article is well-organized or just a blob of text.
         """
         if not self.soup:
             return {"error": "No content to analyze"}
         
-        # Extract structural elements
+        # Count up all the structural elements
         headings = self._extract_headings()
         paragraphs = self.soup.find_all('p')
         lists = self.soup.find_all(['ul', 'ol'])
         code_blocks = self.soup.find_all(['code', 'pre'])
         images = self.soup.find_all('img')
         
-        # Analyze paragraph lengths
+        # Check paragraph lengths - nobody likes walls of text
         paragraph_lengths = [len(p.get_text().split()) for p in paragraphs if p.get_text().strip()]
         avg_paragraph_length = sum(paragraph_lengths) / len(paragraph_lengths) if paragraph_lengths else 0
         
@@ -191,11 +171,11 @@ class DocumentationAnalyzer:
         
         suggestions = []
         
-        # Check heading structure
+        # Not enough headings = hard to scan
         if len(headings) < 3:
             suggestions.append(
-                "The article has very few headings. Consider adding more subheadings to break up content "
-                "and make it easier to scan and navigate."
+                "This article needs more headings! Add subheadings to break up the content "
+                "and make it easier to skim."
             )
         
         if not assessment["heading_hierarchy"]["is_valid"]:

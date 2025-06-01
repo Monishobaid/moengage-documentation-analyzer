@@ -8,30 +8,24 @@ from documentation_analyzer import DocumentationAnalyzer
 
 class DocumentationRevisionAgent:
     """
-    The second agent in our documentation improvement pipeline.
+    Agent #2 - takes the analysis from Agent 1 and actually fixes stuff.
     
-    This agent takes the analysis results from DocumentationAnalyzer and automatically
-    applies improvements that can be reliably automated. This includes:
-    - Microsoft Style Guide compliance fixes
-    - Basic readability improvements 
-    - Structure enhancements
-    - AI-assisted content improvements using local Ollama models
+    This guy automatically applies improvements that we're confident about:
+    - Microsoft Style Guide fixes (contractions, capitalization, etc.)
+    - Basic readability stuff (breaking up long paragraphs)
+    - Structure improvements (heading hierarchy)
+    - AI-powered content improvements (if you have Ollama running)
     
-    The focus is on changes that don't require human judgment or domain expertise,
-    allowing content creators to focus on higher-level improvements.
+    We only change things we're sure about - no guesswork that might break
+    technical accuracy. The goal is to handle the boring fixes so humans
+    can focus on the creative stuff.
     """
     
     def __init__(self, ollama_model: str = "llama3.2:3b", ollama_url: str = "http://localhost:11434"):
-        """
-        Initialize the revision agent with AI capabilities.
-        
-        Args:
-            ollama_model: The Ollama model to use for AI-assisted improvements
-            ollama_url: URL of the local Ollama server
-        """
+        """Set up the revision agent, with optional AI superpowers."""
         self.ollama_model = ollama_model
         self.ollama_url = ollama_url
-        # Check if we can use AI features or fall back to rule-based only
+        # Check if we can use AI, otherwise stick to rule-based fixes
         self.use_ai = self._check_ollama_availability()
         
         if not self.use_ai:
@@ -41,7 +35,7 @@ class DocumentationRevisionAgent:
             print("   2. Start service: brew services start ollama")
             print("   3. Download model: ollama pull llama3.2:3b")
         
-        # Initialize content storage - will be populated by process_document()
+        # We'll populate these when process_document() is called
         self.original_content = None
         self.soup = None
         self.suggestions = None
@@ -49,15 +43,12 @@ class DocumentationRevisionAgent:
         
     def _check_ollama_availability(self) -> bool:
         """
-        Verify that Ollama is running and has the required model available.
+        See if Ollama is running and has our model ready to go.
         
-        This method performs a series of checks:
-        1. Can we connect to the Ollama server?
-        2. Is our preferred model downloaded and available?
-        3. Can we make a basic API request?
-        
-        Returns:
-            bool: True if Ollama is fully available, False if we should use rule-based only
+        We check three things:
+        1. Can we reach the Ollama server?
+        2. Is our model actually downloaded?
+        3. Can we make basic API calls?
         """
         try:
             response = requests.get(f"{self.ollama_url}/api/tags", timeout=5)
@@ -65,7 +56,7 @@ class DocumentationRevisionAgent:
                 models = response.json().get('models', [])
                 available_models = [model['name'] for model in models]
                 
-                # Check if our preferred model is available
+                # Look for our specific model
                 if self.ollama_model in available_models or f"{self.ollama_model}:latest" in available_models:
                     print(f"SUCCESS: Ollama available with model: {self.ollama_model}")
                     return True
@@ -77,46 +68,39 @@ class DocumentationRevisionAgent:
             else:
                 return False
         except requests.exceptions.RequestException:
-            # Ollama server is not running or not accessible
+            # Ollama server isn't running or we can't reach it
             return False
     
     def process_document(self, url: str, suggestions: Dict = None) -> Dict:
         """
-        Main processing method that coordinates the entire revision workflow.
+        The main event - takes a URL and applies all the improvements we can.
         
-        This method orchestrates the complete revision process:
-        1. Fetch the original document if needed
-        2. Get analysis suggestions if not provided
-        3. Apply all feasible revisions
-        4. Generate a comprehensive report of changes
-        
-        Args:
-            url: URL of the documentation to revise
-            suggestions: Pre-generated suggestions from DocumentationAnalyzer (optional)
-            
-        Returns:
-            Dict containing original content, applied changes, and revised content
+        Here's what happens:
+        1. Grab the original document
+        2. Get suggestions (either use provided ones or generate fresh)
+        3. Apply all the fixes we can safely automate
+        4. Return a report of what we changed
         """
-        # Start by getting the original document content
+        # First, get the original document
         analyzer = DocumentationAnalyzer()
         if not analyzer.fetch_article(url):
             return {"error": "Failed to fetch article"}
         
-        # Store the original content for comparison and revision
+        # Save the original for comparison
         self.original_content = analyzer.content
         self.soup = BeautifulSoup(self.original_content, 'html.parser')
         
-        # If no suggestions were provided, generate them now
-        # This allows the revision agent to work independently
+        # If no suggestions provided, generate them ourselves
+        # Makes this agent work standalone
         if suggestions is None:
             suggestions = analyzer.generate_report()
         
         self.suggestions = suggestions
         
-        # Apply all the revisions we can automate
+        # Do all the improvements we can
         self.revised_content = self._apply_all_revisions()
         
-        # Return a comprehensive report of what we accomplished
+        # Send back a full report
         return {
             "url": url,
             "original_content": self.original_content,
@@ -127,24 +111,21 @@ class DocumentationRevisionAgent:
     
     def _apply_all_revisions(self) -> str:
         """
-        Coordinate the application of all revision types.
+        Apply improvements in order of confidence level.
         
-        This method applies revisions in a specific order:
-        1. Microsoft Style Guide fixes (most reliable)
-        2. Structure improvements (medium complexity)
-        3. AI-assisted revisions (if available, highest complexity)
-        
-        Returns:
-            str: The fully revised HTML content
+        We go from most reliable to least reliable:
+        1. Microsoft Style Guide fixes (super safe)
+        2. Structure improvements (pretty safe)
+        3. AI content improvements (depends on model quality)
         """
-        # Start with a fresh copy of the original content
+        # Start fresh with the original
         revised_soup = BeautifulSoup(self.original_content, 'html.parser')
         
-        # Apply the most reliable, rule-based improvements first
+        # Apply the safe stuff first
         revised_soup = self._apply_microsoft_style_fixes(revised_soup)
         revised_soup = self._apply_structure_improvements(revised_soup)
         
-        # Add AI improvements if we have Ollama available
+        # Add AI magic if available
         if self.use_ai:
             revised_soup = self._apply_ai_revisions(revised_soup)
         
@@ -152,43 +133,38 @@ class DocumentationRevisionAgent:
     
     def _apply_microsoft_style_fixes(self, soup: BeautifulSoup) -> BeautifulSoup:
         """
-        Apply Microsoft Style Guide compliance fixes automatically.
+        Apply Microsoft Style Guide rules automatically.
         
-        These fixes are based on well-defined rules from the Microsoft Style Guide:
-        - Add contractions for friendlier tone
-        - Remove verbose phrases
+        These are the safe, well-defined fixes:
+        - Add contractions (it is → it's)
+        - Remove wordy phrases (in order to → to)
         - Fix spacing issues
-        - Correct heading capitalization and punctuation
+        - Fix heading capitalization
         - Add Oxford commas
         
-        Args:
-            soup: BeautifulSoup object containing the HTML to revise
-            
-        Returns:
-            BeautifulSoup: Updated soup with style fixes applied
+        We skip script/style tags because we don't want to break code.
         """
         
-        # Process all text nodes in the document
-        # We skip script and style tags since those shouldn't be modified
+        # Go through all text in the document
         text_elements = soup.find_all(text=True)
         
         for element in text_elements:
             if element.parent.name in ['script', 'style']:
-                continue
+                continue  # Don't mess with code
                 
             original_text = str(element)
             revised_text = original_text
             
-            # Apply each type of text improvement
+            # Apply text improvements
             revised_text = self._add_contractions(revised_text)
             revised_text = self._simplify_verbose_phrases(revised_text)
             revised_text = self._fix_spacing_issues(revised_text)
             
-            # Only update the element if we actually made changes
+            # Only change it if we actually improved something
             if revised_text != original_text:
                 element.replace_with(revised_text)
         
-        # Handle structural improvements that need to work on HTML elements
+        # Handle HTML structure fixes
         soup = self._fix_heading_issues(soup)
         soup = self._add_oxford_commas(soup)
         
@@ -196,11 +172,10 @@ class DocumentationRevisionAgent:
     
     def _add_contractions(self, text: str) -> str:
         """
-        Add contractions to make the tone more conversational and friendly.
+        Make the tone friendlier by adding contractions.
         
-        This follows Microsoft Style Guide recommendations to use contractions
-        for a more natural, approachable tone. We target the most common
-        formal phrases that can be safely converted.
+        Microsoft Style Guide says contractions make docs more approachable.
+        We stick to the common ones that won't confuse anyone.
         
         Args:
             text: The text to process

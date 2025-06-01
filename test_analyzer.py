@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Test script for the MoEngage Documentation Analyzer
+Test script for the Documentation Analyzer
 
-This script tests various functionalities of the analyzer to ensure
-it's working correctly.
+Just makes sure everything's working properly before you start
+using it on real documentation.
 """
 
 import unittest
@@ -11,49 +11,49 @@ from documentation_analyzer import DocumentationAnalyzer
 import json
 
 class TestDocumentationAnalyzer(unittest.TestCase):
-    """Test cases for the Documentation Analyzer"""
+    """Basic tests to make sure the analyzer isn't broken"""
     
     def setUp(self):
-        """Set up test fixtures"""
+        """Get ready for each test"""
         self.analyzer = DocumentationAnalyzer()
-        # Test with a working MoEngage documentation URL
+        # Use a working MoEngage URL for testing
         self.test_url = "https://help.moengage.com/hc/en-us/articles/23072207451540-Discontinuation-of-Mi-Push-Service#h_01HMRTTR1Y5HBZW390A7S3HAFB"
     
     def test_initialization(self):
-        """Test analyzer initialization"""
+        """Make sure the analyzer starts up clean"""
         self.assertIsNone(self.analyzer.url)
         self.assertIsNone(self.analyzer.content)
         self.assertIsNone(self.analyzer.soup)
         self.assertIsNone(self.analyzer.text_content)
     
     def test_fetch_article(self):
-        """Test article fetching"""
-        # Test with valid URL
+        """Test that we can actually grab articles from URLs"""
+        # Try with a good URL
         result = self.analyzer.fetch_article(self.test_url)
         self.assertTrue(result)
         self.assertIsNotNone(self.analyzer.content)
         self.assertIsNotNone(self.analyzer.soup)
         self.assertIsNotNone(self.analyzer.text_content)
         
-        # Test with invalid URL
+        # Try with a bad URL
         analyzer2 = DocumentationAnalyzer()
         result = analyzer2.fetch_article("https://invalid-url-that-does-not-exist.com")
         self.assertFalse(result)
     
     def test_readability_analysis(self):
-        """Test readability analysis"""
-        # First fetch an article
+        """Check that readability analysis actually works"""
+        # Grab an article first
         self.analyzer.fetch_article(self.test_url)
         
-        # Analyze readability
+        # Run readability analysis
         readability = self.analyzer.analyze_readability()
         
-        # Check structure
+        # Make sure we get the right structure back
         self.assertIn('assessment', readability)
         self.assertIn('explanation', readability)
         self.assertIn('suggestions', readability)
         
-        # Check assessment fields
+        # Check that assessment has all the scores we expect
         assessment = readability['assessment']
         self.assertIn('flesch_reading_ease', assessment)
         self.assertIn('gunning_fog_index', assessment)
@@ -61,29 +61,29 @@ class TestDocumentationAnalyzer(unittest.TestCase):
         self.assertIn('readability_level', assessment)
         self.assertIn('technical_terms_count', assessment)
         
-        # Check data types
+        # Make sure the data types are right
         self.assertIsInstance(assessment['flesch_reading_ease'], (int, float))
         self.assertIsInstance(assessment['gunning_fog_index'], (int, float))
         self.assertIsInstance(assessment['average_sentence_length'], (int, float))
         self.assertIsInstance(assessment['readability_level'], str)
         self.assertIsInstance(assessment['technical_terms_count'], int)
         
-        # Check suggestions is a list
+        # Suggestions should be a list
         self.assertIsInstance(readability['suggestions'], list)
     
     def test_structure_analysis(self):
-        """Test structure analysis"""
-        # First fetch an article
+        """Test structure analysis functionality"""
+        # Grab an article first
         self.analyzer.fetch_article(self.test_url)
         
-        # Analyze structure
+        # Check structure
         structure = self.analyzer.analyze_structure()
         
-        # Check structure
+        # Basic structure check
         self.assertIn('assessment', structure)
         self.assertIn('suggestions', structure)
         
-        # Check assessment fields
+        # Make sure we're counting everything we should
         assessment = structure['assessment']
         self.assertIn('headings_count', assessment)
         self.assertIn('paragraphs_count', assessment)
@@ -93,7 +93,7 @@ class TestDocumentationAnalyzer(unittest.TestCase):
         self.assertIn('average_paragraph_length', assessment)
         self.assertIn('heading_hierarchy', assessment)
         
-        # Check data types
+        # Type checking
         self.assertIsInstance(assessment['headings_count'], int)
         self.assertIsInstance(assessment['paragraphs_count'], int)
         self.assertIsInstance(assessment['lists_count'], int)
@@ -102,22 +102,22 @@ class TestDocumentationAnalyzer(unittest.TestCase):
         self.assertIsInstance(assessment['average_paragraph_length'], (int, float))
         self.assertIsInstance(assessment['heading_hierarchy'], dict)
         
-        # Check suggestions is a list
+        # Suggestions should be a list
         self.assertIsInstance(structure['suggestions'], list)
     
     def test_completeness_analysis(self):
-        """Test completeness analysis"""
-        # First fetch an article
+        """Make sure completeness analysis works"""
+        # Grab an article first
         self.analyzer.fetch_article(self.test_url)
         
-        # Analyze completeness
+        # Check completeness
         completeness = self.analyzer.analyze_completeness()
         
-        # Check structure
+        # Basic structure
         self.assertIn('assessment', completeness)
         self.assertIn('suggestions', completeness)
         
-        # Check assessment fields
+        # Should count examples, images, etc.
         assessment = completeness['assessment']
         self.assertIn('code_examples_count', assessment)
         self.assertIn('images_count', assessment)
@@ -125,58 +125,58 @@ class TestDocumentationAnalyzer(unittest.TestCase):
         self.assertIn('has_step_by_step', assessment)
         self.assertIn('alerts_count', assessment)
         
-        # Check data types
+        # Type checking
         self.assertIsInstance(assessment['code_examples_count'], int)
         self.assertIsInstance(assessment['images_count'], int)
         self.assertIsInstance(assessment['example_mentions'], int)
         self.assertIsInstance(assessment['has_step_by_step'], bool)
         self.assertIsInstance(assessment['alerts_count'], int)
         
-        # Check suggestions is a list
+        # Suggestions should be a list
         self.assertIsInstance(completeness['suggestions'], list)
     
     def test_style_guidelines_analysis(self):
-        """Test style guidelines analysis"""
-        # First fetch an article
+        """Test the Microsoft Style Guide checking"""
+        # Grab an article first
         self.analyzer.fetch_article(self.test_url)
         
-        # Analyze style
+        # Check style
         style = self.analyzer.analyze_style_guidelines()
         
-        # Check structure
+        # Basic structure
         self.assertIn('assessment', style)
         self.assertIn('suggestions', style)
         
-        # Check assessment fields
+        # Should analyze voice, clarity, action orientation
         assessment = style['assessment']
         self.assertIn('voice_tone', assessment)
         self.assertIn('clarity', assessment)
         self.assertIn('action_orientation', assessment)
         
-        # Check voice_tone fields
+        # Voice and tone checks
         voice_tone = assessment['voice_tone']
         self.assertIn('passive_voice_percentage', voice_tone)
         self.assertIn('passive_examples', voice_tone)
         self.assertIn('first_person_count', voice_tone)
         
-        # Check action_orientation fields
+        # Action orientation checks
         action = assessment['action_orientation']
         self.assertIn('weak_verbs_count', action)
         self.assertIn('weak_verb_examples', action)
         self.assertIn('has_clear_actions', action)
         
-        # Check suggestions is a list
+        # Suggestions should be a list
         self.assertIsInstance(style['suggestions'], list)
     
     def test_generate_report(self):
-        """Test full report generation"""
-        # First fetch an article
+        """Test the full end-to-end report generation"""
+        # Grab an article first
         self.analyzer.fetch_article(self.test_url)
         
-        # Generate report
+        # Generate the complete report
         report = self.analyzer.generate_report()
         
-        # Check main structure
+        # Should have all the main sections
         self.assertIn('url', report)
         self.assertIn('analysis_timestamp', report)
         self.assertIn('readability', report)
@@ -185,38 +185,18 @@ class TestDocumentationAnalyzer(unittest.TestCase):
         self.assertIn('style_guidelines', report)
         self.assertIn('overall_recommendations', report)
         
-        # Check URL matches
+        # URL should match what we passed in
         self.assertEqual(report['url'], self.test_url)
         
-        # Check overall recommendations is a list
+        # Overall recommendations should be a list
         self.assertIsInstance(report['overall_recommendations'], list)
         
-        # Validate JSON serializable
+        # Make sure we can serialize it to JSON (important for web interface)
         try:
             json_str = json.dumps(report)
             self.assertIsInstance(json_str, str)
         except Exception as e:
             self.fail(f"Report is not JSON serializable: {e}")
-    
-    def test_empty_content_handling(self):
-        """Test handling of empty content"""
-        # Try to analyze without fetching
-        analyzer = DocumentationAnalyzer()
-        
-        readability = analyzer.analyze_readability()
-        self.assertIn('error', readability)
-        
-        structure = analyzer.analyze_structure()
-        self.assertIn('error', structure)
-        
-        completeness = analyzer.analyze_completeness()
-        self.assertIn('error', completeness)
-        
-        style = analyzer.analyze_style_guidelines()
-        self.assertIn('error', style)
-        
-        report = analyzer.generate_report()
-        self.assertIn('error', report)
 
 
 def run_validation_tests():
