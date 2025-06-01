@@ -15,7 +15,7 @@ A comprehensive two-agent system designed to automatically analyze and improve M
 
 ## Quick Start Guide
 
-### 🚀 Want to try it right now?
+###  Want to try it right now?
 
 1. **Clone and setup:**
 ```bash
@@ -225,9 +225,9 @@ improved_html = revision_results["revised_content"]
 ```
 
 **Revision Results** (Agent 2):
-- ✅ **Applied Microsoft Style Guide fixes:** Added contractions, fixed capitalization
-- ✅ **Applied AI improvements:** Converted passive voice, simplified complex sentences
-- ✅ **Applied structure improvements:** Broke up long paragraphs
+-  **Applied Microsoft Style Guide fixes:** Added contractions, fixed capitalization
+-  **Applied AI improvements:** Converted passive voice, simplified complex sentences
+-  **Applied structure improvements:** Broke up long paragraphs
 
 **Before vs After Examples:**
 
@@ -439,4 +439,4 @@ Given more time, here are the enhancements we would prioritize:
 python test_analyzer.py
 ```
 
-This tool is designed to be your documentation quality partner - helping you create clear, accessible content that serves your users better! 🚀 
+This tool is designed to be your documentation quality partner - helping you create clear, accessible content that serves your users better! 
